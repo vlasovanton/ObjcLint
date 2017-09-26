@@ -5,6 +5,31 @@ Objective-C rules for OCLint
 
 [Default cocoa rules by OCLint](https://github.com/oclint/oclint/tree/master/oclint-rules/rules/cocoa)
 
+## Подготовка среды разработки правил для OCLint
+- [OCLint checkout]http://docs.oclint.org/en/stable/devel/checkout.html
+- [OCLint build]http://docs.oclint.org/en/stable/devel/compiletest.html
+
+## Шаги разработки нового правила
+- создать шаблон правила
+- написать тесты с примерами кода и результатом должен ли быть warning или нет
+- написать правила и добиться прохождения всех тестов
+- подключить правила к Xcode
+
+### Как создать шаблон правила
+- в директории oclint-scripts выполнить скрипт ./scaffoldRule -h с необходимыми параметрами. В папках с исходными файлами создаются заготовки (oclint-rules/test/custom и oclint-rules/rules/custom)
+
+### Как писать тесты для правил
+
+- запуск тестов: в директории oclint-scripts выполнить скрипт ./test rules
+
+### Как писать правила
+
+### Как подключить к Xcode
+Необходимо создать Aggregate target с builde step "custom script".
+xcodebuild -configuration Debug -scheme XXXX -workspace XXXX.xcworkspace clean
+xcodebuild -configuration Debug -scheme XXXX -workspace XXXX.xcworkspace | xcpretty -r json-compilation-database -o compile_commands.json
+oclint-json-compilation-database -i XXXX/ -- -report-type xcode
+
 ### Список правил:
 blocker
 - неправильное использование компонентов с MRC в коде, не обнуление ссылок и т.д.
