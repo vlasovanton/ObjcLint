@@ -6,8 +6,8 @@ Objective-C rules for OCLint
 [Default cocoa rules by OCLint](https://github.com/oclint/oclint/tree/master/oclint-rules/rules/cocoa)
 
 ## Подготовка среды разработки правил для OCLint
-- [OCLint checkout]http://docs.oclint.org/en/stable/devel/checkout.html
-- [OCLint build]http://docs.oclint.org/en/stable/devel/compiletest.html
+- [OCLint checkout](http://docs.oclint.org/en/stable/devel/checkout.html)
+- [OCLint build](http://docs.oclint.org/en/stable/devel/compiletest.html)
 
 ## Шаги разработки нового правила
 - создать шаблон правила
@@ -16,13 +16,31 @@ Objective-C rules for OCLint
 - подключить правила к Xcode
 
 ### Как создать шаблон правила
-- в директории oclint-scripts выполнить скрипт ./scaffoldRule -h с необходимыми параметрами. В папках с исходными файлами создаются заготовки (oclint-rules/test/custom и oclint-rules/rules/custom)
+- в директории oclint-scripts выполнить скрипт ./scaffoldRule с параметрами: название нового правила, тип правила через флаг -t (удобнее ASTVisitor). В папках с исходными файлами создаются заготовки (oclint-rules/test/custom и oclint-rules/rules/custom)
 
 ### Как писать тесты для правил
-
+- в папке oclint-rules/test/custom находим файл с названием соответствующим создоваемому правилу
+- определяем примеры со всеми вариантами соответсвующими и не соответсвующими правилу в переменной типа  string
+- пишем тесты с использованием вспомогательной функции:
+void testRuleOnObjCCode(RuleBase *rule,
+            const string &code,
+            int violationIndex,
+            int expectStartLine,
+            int expectStartColumn,
+            int expectEndLine,
+            int expectEndColumn,
+            const string& expectMessage = "");
 - запуск тестов: в директории oclint-scripts выполнить скрипт ./test rules
 
 ### Как писать правила
+- в папке oclint-rules/rules/custom находим файл с названием соответствующим создоваемому правилу
+- если используется тип правила ASTVisitor, то определяем тип интересующей ноды. Например, если правило для методов, то можно использовать метод VisitObjCMethodDecl.
+- выделяем диапозон в исходном файле с помощью node->getSourceRange()
+- если необходимо расширить диапозон, то используем nodeRange.getBegin() или nodeRange.getEnd()
+- для получения исходной строки по диапозону используем Lexer::getSourceText
+- для анализа полученной строки используем регулярные выражения с помощью <regex>
+- для вывода warning необходимо вызвать addViolation(const clang::Decl *decl,
+RuleBase *rule, const std::string& message)
 
 ### Как подключить к Xcode
 Необходимо создать Aggregate target с builde step "custom script".
