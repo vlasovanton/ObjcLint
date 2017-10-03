@@ -183,6 +183,32 @@ R"(@interface NSObject
 
 )";
 
+static string startCurveBracesAtElseStatementWithSameLineWithCode =
+R"(@interface NSObject
+@end
+
+@interface BaseObject : NSObject
+@end
+
+@implementation BaseObject
+
+- (int)hash
+{
+    if (1)
+    {
+
+    }
+    else {
+
+    }
+
+    return 0;
+}
+
+@end
+
+)";
+
 TEST(CheckCurveBraceRuleTest, PropertyTest)
 {
     CheckCurveBraceRule rule;
@@ -228,17 +254,23 @@ TEST(CheckCurveBraceRuleTest, TestWhenEndCurveBracesAtMethodDeclarationWithExtra
 TEST(CheckCurveBraceRuleTest, TestWhenCurveBracesAtIfStatementWithSameLineWithCode)
 {
     testRuleOnObjCCode(new CheckCurveBraceRule(), curveBracesAtIfStatementWithSameLineWithCode,
-    0, 11, 5, 13, 5, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+    0, 11, 12, 13, 5, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
 }
 
 TEST(CheckCurveBraceRuleTest, TestWhenEndCurveBracesAtElseStatementWithSameLineWithCode)
 {
     testRuleOnObjCCode(new CheckCurveBraceRule(), endCurveBracesAtElseStatementWithSameLineWithCode,
-    0, 11, 5, 16, 12, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+    1, 16, 5, 16, 12, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
 }
 
 TEST(CheckCurveBraceRuleTest, TestWhenEndCurveBracesAtIfStatementWithSameLineWithCode)
 {
     testRuleOnObjCCode(new CheckCurveBraceRule(), endCurveBracesAtIfStatementWithSameLineWithCode,
-    0, 11, 5, 16, 12, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+    0, 12, 5, 12, 9, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+}
+
+TEST(CheckCurveBraceRuleTest, TestWhenStartCurveBracesAtElseStatementWithSameLineWithCode)
+{
+    testRuleOnObjCCode(new CheckCurveBraceRule(), startCurveBracesAtElseStatementWithSameLineWithCode,
+    0, 15, 10, 17, 5, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
 }

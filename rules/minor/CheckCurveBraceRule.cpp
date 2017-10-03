@@ -45,15 +45,24 @@ private:
 
     void checkFirstLineAtNode(Stmt *node)
     {
+        SourceManager& sourceManager = _carrier->getSourceManager();
+        auto fileID = sourceManager.getMainFileID();
+        auto fileEntry = sourceManager.getFileEntryForID(fileID);
+
         auto nodeRange = node->getSourceRange();
-        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(nodeRange), _carrier->getSourceManager(), LangOptions());
+        auto startLocation = nodeRange.getBegin();
 
-        auto pair = nodeStringRef.split("\n");
-        auto tail = pair.second;
-        pair = tail.split('\n');
-        auto firstLine = pair.first;
+        auto startLineNumber = sourceManager.getPresumedLineNumber(startLocation);
+        auto beforeStartLineNumber = startLineNumber - 1;
 
-        std::regex curve_regex("(^|\n)\\s+\\{");
+        auto firstSymbolAtLineBeforeStartLocation = sourceManager.translateFileLineCol(fileEntry, beforeStartLineNumber, 0);
+        auto firstSymbolAtLineOfStartLocation = sourceManager.translateFileLineCol(fileEntry, startLineNumber, 0);
+
+        auto firstLineSourceRange = SourceRange(firstSymbolAtLineBeforeStartLocation, firstSymbolAtLineOfStartLocation);
+
+        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(firstLineSourceRange), _carrier->getSourceManager(), LangOptions());
+
+        std::regex curve_regex("(^|\n)\\s+\\{$");
         std::smatch curve_match;
         if (std::regex_search(nodeStringRef.str(), curve_match, curve_regex)) 
         {
@@ -65,16 +74,27 @@ private:
 
     void checkLastLineAtNode(Stmt *node)
     {
+        SourceManager& sourceManager = _carrier->getSourceManager();
+        auto fileID = sourceManager.getMainFileID();
+        auto fileEntry = sourceManager.getFileEntryForID(fileID);
+
         auto nodeRange = node->getSourceRange();
-        auto endLoc = nodeRange.getEnd();
-        auto trueEndLoc = endLoc.getLocWithOffset(1);
-        nodeRange.setEnd(trueEndLoc);
-        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(nodeRange), _carrier->getSourceManager(), LangOptions());
-        auto pair = nodeStringRef.rsplit('\n');
-        auto lastLine = pair.second;
-        std::regex curve_regex2("(\n)\\s+\\}$");
-        std::smatch curve_match2;
-        if (std::regex_search(nodeStringRef.str(), curve_match2, curve_regex2)) 
+        auto endLocation = nodeRange.getEnd();
+
+        auto endLineNumber = sourceManager.getPresumedLineNumber(endLocation);
+        auto beforeEndLineNumber = endLineNumber - 1;
+
+        auto firstSymbolAtLineBeforeEndLocation = sourceManager.translateFileLineCol(fileEntry, beforeEndLineNumber, 0);
+        auto firstSymbolAtLineOfEndLocation = sourceManager.translateFileLineCol(fileEntry, endLineNumber, 0);
+
+        auto lastLineSourceRange = SourceRange(firstSymbolAtLineBeforeEndLocation, firstSymbolAtLineOfEndLocation);
+
+        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(lastLineSourceRange), _carrier->getSourceManager(), LangOptions());
+
+        std::regex curve_regex("(\n)\\s+\\}$");
+        std::smatch curve_match;
+
+        if (std::regex_search(nodeStringRef.str(), curve_match, curve_regex)) 
         {
         } else
         {
@@ -157,13 +177,20 @@ public:
     //Visit IfStmt
     bool VisitIfStmt(IfStmt *node)
     {
-        checkFirstLineAtNode(node);
-        checkLastLineAtNode(node);
-        // ofstream myfile;
-        // myfile.open ("/Users/antonvlasov/Downloads/example.txt", ios::out | ios::app);
-        // myfile << ref.str();
-        // myfile << "\n";
-        // myfile.close();
+        auto ifStmt = node->getThen();
+        if (ifStmt)
+        {
+            checkFirstLineAtNode(ifStmt);
+            checkLastLineAtNode(ifStmt);
+        }
+        
+        auto elseStmt = node->getElse();
+        if (elseStmt)
+        {
+            checkFirstLineAtNode(elseStmt);
+            checkLastLineAtNode(elseStmt);
+        }
+
         return true;
     }
     
