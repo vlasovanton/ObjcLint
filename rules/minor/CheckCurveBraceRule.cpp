@@ -52,17 +52,17 @@ private:
         auto nodeRange = node->getSourceRange();
         auto startLocation = nodeRange.getBegin();
 
-        auto startLineNumber = sourceManager.getPresumedLineNumber(startLocation);
+        auto startLineNumber = sourceManager.getPresumedLineNumber(startLocation)+1;
         auto beforeStartLineNumber = startLineNumber - 1;
 
-        auto firstSymbolAtLineBeforeStartLocation = sourceManager.translateFileLineCol(fileEntry, beforeStartLineNumber, 0);
-        auto firstSymbolAtLineOfStartLocation = sourceManager.translateFileLineCol(fileEntry, startLineNumber, 0);
+        auto firstSymbolAtLineBeforeStartLocation = sourceManager.translateFileLineCol(fileEntry, beforeStartLineNumber, 1);
+        auto firstSymbolAtLineOfStartLocation = sourceManager.translateFileLineCol(fileEntry, startLineNumber, 1);
 
         auto firstLineSourceRange = SourceRange(firstSymbolAtLineBeforeStartLocation, firstSymbolAtLineOfStartLocation);
 
-        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(firstLineSourceRange), _carrier->getSourceManager(), LangOptions());
-
-        std::regex curve_regex("(^|\n)\\s+\\{$");
+        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(firstLineSourceRange), sourceManager, LangOptions());
+        
+        std::regex curve_regex("^[\\t ]+\\{(\n|$)");
         std::smatch curve_match;
         if (std::regex_search(nodeStringRef.str(), curve_match, curve_regex)) 
         {
@@ -89,9 +89,9 @@ private:
 
         auto lastLineSourceRange = SourceRange(firstSymbolAtLineBeforeEndLocation, firstSymbolAtLineOfEndLocation);
 
-        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(lastLineSourceRange), _carrier->getSourceManager(), LangOptions());
+        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(lastLineSourceRange), sourceManager, LangOptions());
 
-        std::regex curve_regex("(\n)\\s+\\}$");
+        std::regex curve_regex("^\\s+\\}$");
         std::smatch curve_match;
 
         if (std::regex_search(nodeStringRef.str(), curve_match, curve_regex)) 
@@ -177,6 +177,17 @@ public:
     //Visit IfStmt
     bool VisitIfStmt(IfStmt *node)
     {
+        auto nodeRange = node->getSourceRange();
+        auto elseLoc = node->getElseLoc();
+        nodeRange.setBegin(elseLoc);
+
+        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(nodeRange), _carrier->getSourceManager(), LangOptions());
+
+        ofstream myfile;
+        myfile.open ("/Users/antonvlasov/Downloads/example.txt", ios::out | ios::app);
+        myfile << nodeStringRef.str();
+        myfile.close();
+
         auto ifStmt = node->getThen();
         if (ifStmt)
         {
@@ -213,6 +224,13 @@ public:
 
     bool VisitForStmt(ForStmt *node)
     {
+        auto forBody = node->getBody();
+
+        if (forBody)
+        {
+            checkFirstLineAtNode(forBody);
+            checkLastLineAtNode(forBody);
+        }
         return true;
     }
 
