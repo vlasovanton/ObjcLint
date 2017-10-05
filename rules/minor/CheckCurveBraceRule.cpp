@@ -13,92 +13,68 @@ class CheckCurveBraceRule : public AbstractASTVisitorRule<CheckCurveBraceRule>
 private:
     string description = "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке";
     
-    void checkFirstLineAtNode(Decl *node)
-    {
-        auto nodeRange = node->getSourceRange();
-        auto nodeStringRef = Lexer::getSourceText(CharSourceRange::getCharRange(nodeRange), _carrier->getSourceManager(), LangOptions());
-        auto pair = nodeStringRef.split("\n");
-        auto tail = pair.second;
-        pair = tail.split('\n');
-        auto firstLine = pair.first;
-
-        if (firstLine.str() != "{") 
-        {
-            addViolation(node, this, description);
-        } 
-    }
-
-    void checkLastLineAtNode(Decl *node)
-    {
-        auto nodeRange = node->getSourceRange();
-        auto endLoc = nodeRange.getEnd();
-        auto trueEndLoc = endLoc.getLocWithOffset(1);
-        nodeRange.setEnd(trueEndLoc);
-        auto nodeText = Lexer::getSourceText(CharSourceRange::getCharRange(nodeRange), _carrier->getSourceManager(), LangOptions());
-        auto pair = nodeText.rsplit('\n');
-        auto lastLine = pair.second;
-        if (lastLine.str() != "}") 
-        {
-            addViolation(node, this, description);
-        } 
-    }
-
-    void checkFirstLineAtNode(Stmt *node)
+    StringRef getLineAtLineNumber(unsigned int lineNumber)
     {
         SourceManager& sourceManager = _carrier->getSourceManager();
         auto fileID = sourceManager.getMainFileID();
         auto fileEntry = sourceManager.getFileEntryForID(fileID);
 
-        auto nodeRange = node->getSourceRange();
-        auto startLocation = nodeRange.getBegin();
+        auto startLocation = sourceManager.translateFileLineCol(fileEntry, lineNumber, 1);
+        auto endLocation = sourceManager.translateFileLineCol(fileEntry, lineNumber+1, 1);
 
-        auto startLineNumber = sourceManager.getPresumedLineNumber(startLocation)+1;
-        auto beforeStartLineNumber = startLineNumber - 1;
+        auto endLocationWithoutSlashN = endLocation.getLocWithOffset(-1);
 
-        auto firstSymbolAtLineBeforeStartLocation = sourceManager.translateFileLineCol(fileEntry, beforeStartLineNumber, 1);
-        auto firstSymbolAtLineOfStartLocation = sourceManager.translateFileLineCol(fileEntry, startLineNumber, 1);
+        auto lineSourceRange = SourceRange(startLocation, endLocationWithoutSlashN);
 
-        auto firstLineSourceRange = SourceRange(firstSymbolAtLineBeforeStartLocation, firstSymbolAtLineOfStartLocation);
+        auto nodeStringRef = Lexer::getSourceText(CharSourceRange::getCharRange(lineSourceRange), sourceManager, LangOptions());
 
-        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(firstLineSourceRange), sourceManager, LangOptions());
-        
+        return nodeStringRef;
+    }
+
+    bool checkFirstLineOfDeclForStringRef(StringRef string)
+    {
+        if (string.str() != "{") 
+        {
+            return true;
+        }
+        return false;
+    }
+
+    bool checkLastLineOfDeclForStringRef(StringRef string)
+    {
+        if (string.str() != "}") 
+        {
+            return true;
+        }
+        return false;
+    }
+
+    bool checkFirstLineOfStmtForStringRef(StringRef string)
+    {
         std::regex curve_regex("^[\\t ]+\\{(\n|$)");
         std::smatch curve_match;
-        if (std::regex_search(nodeStringRef.str(), curve_match, curve_regex)) 
+        if (std::regex_search(string.str(), curve_match, curve_regex)) 
         {
-        } else
+            return false;
+        } 
+        else
         {
-            addViolation(node, this, description);
+            return true;
         }
     }
 
-    void checkLastLineAtNode(Stmt *node)
+    bool checkLastLineOfStmtForStringRef(StringRef string)
     {
-        SourceManager& sourceManager = _carrier->getSourceManager();
-        auto fileID = sourceManager.getMainFileID();
-        auto fileEntry = sourceManager.getFileEntryForID(fileID);
-
-        auto nodeRange = node->getSourceRange();
-        auto endLocation = nodeRange.getEnd();
-
-        auto endLineNumber = sourceManager.getPresumedLineNumber(endLocation);
-        auto beforeEndLineNumber = endLineNumber - 1;
-
-        auto firstSymbolAtLineBeforeEndLocation = sourceManager.translateFileLineCol(fileEntry, beforeEndLineNumber, 0);
-        auto firstSymbolAtLineOfEndLocation = sourceManager.translateFileLineCol(fileEntry, endLineNumber, 0);
-
-        auto lastLineSourceRange = SourceRange(firstSymbolAtLineBeforeEndLocation, firstSymbolAtLineOfEndLocation);
-
-        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(lastLineSourceRange), sourceManager, LangOptions());
-
         std::regex curve_regex("^\\s+\\}$");
         std::smatch curve_match;
 
-        if (std::regex_search(nodeStringRef.str(), curve_match, curve_regex)) 
+        if (std::regex_search(string.str(), curve_match, curve_regex)) 
         {
-        } else
+            return false;
+        }
+        else
         {
-            addViolation(node, this, description);
+            return true;
         }
     }
 
@@ -177,30 +153,19 @@ public:
     //Visit IfStmt
     bool VisitIfStmt(IfStmt *node)
     {
-        auto nodeRange = node->getSourceRange();
-        auto elseLoc = node->getElseLoc();
-        nodeRange.setBegin(elseLoc);
-
-        auto nodeStringRef= Lexer::getSourceText(CharSourceRange::getCharRange(nodeRange), _carrier->getSourceManager(), LangOptions());
-
-        ofstream myfile;
-        myfile.open ("/Users/antonvlasov/Downloads/example.txt", ios::out | ios::app);
-        myfile << nodeStringRef.str();
-        myfile.close();
-
-        auto ifStmt = node->getThen();
-        if (ifStmt)
-        {
-            checkFirstLineAtNode(ifStmt);
-            checkLastLineAtNode(ifStmt);
-        }
+        // auto ifStmt = node->getThen();
+        // if (ifStmt)
+        // {
+        //     checkFirstLineAtNode(ifStmt);
+        //     checkLastLineAtNode(ifStmt);
+        // }
         
-        auto elseStmt = node->getElse();
-        if (elseStmt)
-        {
-            checkFirstLineAtNode(elseStmt);
-            checkLastLineAtNode(elseStmt);
-        }
+        // auto elseStmt = node->getElse();
+        // if (elseStmt)
+        // {
+        //     checkFirstLineAtNode(elseStmt);
+        //     checkLastLineAtNode(elseStmt);
+        // }
 
         return true;
     }
@@ -224,13 +189,13 @@ public:
 
     bool VisitForStmt(ForStmt *node)
     {
-        auto forBody = node->getBody();
+        // auto forBody = node->getBody();
 
-        if (forBody)
-        {
-            checkFirstLineAtNode(forBody);
-            checkLastLineAtNode(forBody);
-        }
+        // if (forBody)
+        // {
+        //     checkFirstLineAtNode(forBody);
+        //     checkLastLineAtNode(forBody);
+        // }
         return true;
     }
 
@@ -242,8 +207,32 @@ public:
    
     bool VisitObjCMethodDecl(ObjCMethodDecl *node)
     {
-        checkFirstLineAtNode(node);
-        checkLastLineAtNode(node);
+        SourceManager& sourceManager = _carrier->getSourceManager();
+ 
+        auto declaratorEndLoc = node->getDeclaratorEndLoc();
+        auto declaratorEndLocWithoutOneSymbol = declaratorEndLoc.getLocWithOffset(-1);
+        auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLocWithoutOneSymbol);
+        auto stringAfterDeclaration = getLineAtLineNumber(declaratorEndLineNumber+1);
+
+        ofstream myfile;
+        myfile.open ("/Users/antonvlasov/Downloads/example.txt", ios::out | ios::app);
+        myfile << stringAfterDeclaration.str();
+        myfile.close();
+
+        if(checkFirstLineOfDeclForStringRef(stringAfterDeclaration))
+        {
+            addViolation(node, this, description);
+        }
+
+        auto bodyEndLoc = node->getLocEnd();
+        auto bodyEndLineNumber = sourceManager.getPresumedLineNumber(bodyEndLoc);
+        auto stringEndBody = getLineAtLineNumber(bodyEndLineNumber);
+
+        if(checkLastLineOfDeclForStringRef(stringEndBody))
+        {
+            addViolation(node, this, description);
+        }
+
         return true;
     }
 
