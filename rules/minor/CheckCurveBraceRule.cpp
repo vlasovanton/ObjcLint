@@ -31,9 +31,30 @@ private:
         return nodeStringRef;
     }
 
+    StringRef getStringFromLocationTillLine(SourceLocation startLocation, unsigned int endLineNumber)
+    {
+        SourceManager& sourceManager = _carrier->getSourceManager();
+        auto fileID = sourceManager.getMainFileID();
+        auto fileEntry = sourceManager.getFileEntryForID(fileID);
+
+        auto endLocation = sourceManager.translateFileLineCol(fileEntry, endLineNumber+1, 1);
+
+        auto endLocationWithoutSlashN = endLocation.getLocWithOffset(-1);
+
+        auto lineSourceRange = SourceRange(startLocation, endLocationWithoutSlashN);
+
+        auto nodeStringRef = Lexer::getSourceText(CharSourceRange::getCharRange(lineSourceRange), sourceManager, LangOptions());
+
+        return nodeStringRef;
+    }
+
+
     bool checkFirstLineOfDeclForStringRef(StringRef string)
     {
-        if (string.str() != "{") 
+        auto pair = string.split("\n");
+        auto tail = pair.second;
+
+        if (tail != "{") 
         {
             return true;
         }
@@ -51,9 +72,12 @@ private:
 
     bool checkFirstLineOfStmtForStringRef(StringRef string)
     {
+        auto pair = string.split("\n");
+        auto tail = pair.second;
+
         std::regex curve_regex("^[\\t ]+\\{(\n|$)");
         std::smatch curve_match;
-        if (std::regex_search(string.str(), curve_match, curve_regex)) 
+        if (std::regex_search(tail.str(), curve_match, curve_regex)) 
         {
             return false;
         } 
@@ -153,19 +177,63 @@ public:
     //Visit IfStmt
     bool VisitIfStmt(IfStmt *node)
     {
-        // auto ifStmt = node->getThen();
-        // if (ifStmt)
-        // {
-        //     checkFirstLineAtNode(ifStmt);
-        //     checkLastLineAtNode(ifStmt);
-        // }
+        SourceManager& sourceManager = _carrier->getSourceManager();
         
-        // auto elseStmt = node->getElse();
-        // if (elseStmt)
-        // {
-        //     checkFirstLineAtNode(elseStmt);
-        //     checkLastLineAtNode(elseStmt);
-        // }
+        auto ifStmt = node->getThen();
+        if (ifStmt)
+        {
+            auto declaratorStartLoc = node->getLocStart();
+            auto declaratorEndLoc = ifStmt->getLocStart();
+            auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLoc);
+    
+            auto declaratorString = getStringFromLocationTillLine(declaratorStartLoc, declaratorEndLineNumber);
+
+            if(checkFirstLineOfStmtForStringRef(declaratorString))
+            {
+                auto startViolationLoc = declaratorEndLoc;
+                auto endViolationLoc = declaratorEndLoc;
+                addViolation(startViolationLoc, endViolationLoc, this, description);
+            }
+
+            auto bodyEndLoc = ifStmt->getLocEnd();
+            auto bodyEndLineNumber = sourceManager.getPresumedLineNumber(bodyEndLoc);
+            auto stringEndBody = getLineAtLineNumber(bodyEndLineNumber);
+
+            if(checkLastLineOfStmtForStringRef(stringEndBody))
+            {
+                auto startViolationLoc = bodyEndLoc;
+                auto endViolationLoc = bodyEndLoc;
+                addViolation(startViolationLoc, endViolationLoc, this, description);
+            }
+        }
+        
+        auto elseStmt = node->getElse();
+        if (elseStmt)
+        {
+            auto declaratorStartLoc = node->getElseLoc();
+            auto declaratorEndLoc = elseStmt->getLocStart();
+            auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLoc);
+    
+            auto declaratorString = getStringFromLocationTillLine(declaratorStartLoc, declaratorEndLineNumber);
+
+            if(checkFirstLineOfStmtForStringRef(declaratorString))
+            {
+                auto startViolationLoc = declaratorEndLoc;
+                auto endViolationLoc = declaratorEndLoc;
+                addViolation(startViolationLoc, endViolationLoc, this, description);
+            }
+
+            auto bodyEndLoc = elseStmt->getLocEnd();
+            auto bodyEndLineNumber = sourceManager.getPresumedLineNumber(bodyEndLoc);
+            auto stringEndBody = getLineAtLineNumber(bodyEndLineNumber);
+
+            if(checkLastLineOfStmtForStringRef(stringEndBody))
+            {
+                auto startViolationLoc = bodyEndLoc;
+                auto endViolationLoc = bodyEndLoc;
+                addViolation(startViolationLoc, endViolationLoc, this, description);
+            }
+        }
 
         return true;
     }
@@ -189,13 +257,25 @@ public:
 
     bool VisitForStmt(ForStmt *node)
     {
-        // auto forBody = node->getBody();
+        SourceManager& sourceManager = _carrier->getSourceManager();
 
-        // if (forBody)
-        // {
-        //     checkFirstLineAtNode(forBody);
-        //     checkLastLineAtNode(forBody);
-        // }
+        auto forBody = node->getBody();
+        
+        if (forBody)
+        {
+            auto declaratorStartLoc = node->getLocStart();
+            auto declaratorEndLoc = forBody->getLocStart();
+            auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLoc);
+    
+            auto declaratorString = getStringFromLocationTillLine(declaratorStartLoc, declaratorEndLineNumber);
+
+            if(checkFirstLineOfStmtForStringRef(declaratorString))
+            {
+                auto startViolationLoc = declaratorEndLoc;
+                auto endViolationLoc = declaratorEndLoc;
+                addViolation(startViolationLoc, endViolationLoc, this, description);
+            }
+        }
         return true;
     }
 
@@ -209,19 +289,17 @@ public:
     {
         SourceManager& sourceManager = _carrier->getSourceManager();
  
+        auto declaratorStartLoc = node->getLocStart();
         auto declaratorEndLoc = node->getDeclaratorEndLoc();
-        auto declaratorEndLocWithoutOneSymbol = declaratorEndLoc.getLocWithOffset(-1);
-        auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLocWithoutOneSymbol);
-        auto stringAfterDeclaration = getLineAtLineNumber(declaratorEndLineNumber+1);
+        auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLoc);
 
-        ofstream myfile;
-        myfile.open ("/Users/antonvlasov/Downloads/example.txt", ios::out | ios::app);
-        myfile << stringAfterDeclaration.str();
-        myfile.close();
+        auto declaratorString = getStringFromLocationTillLine(declaratorStartLoc, declaratorEndLineNumber);
 
-        if(checkFirstLineOfDeclForStringRef(stringAfterDeclaration))
+        if(checkFirstLineOfDeclForStringRef(declaratorString))
         {
-            addViolation(node, this, description);
+            auto startViolationLoc = declaratorEndLoc;
+            auto endViolationLoc = declaratorEndLoc;
+            addViolation(startViolationLoc, endViolationLoc, this, description);
         }
 
         auto bodyEndLoc = node->getLocEnd();
@@ -230,7 +308,9 @@ public:
 
         if(checkLastLineOfDeclForStringRef(stringEndBody))
         {
-            addViolation(node, this, description);
+            auto startViolationLoc = bodyEndLoc;
+            auto endViolationLoc = bodyEndLoc;
+            addViolation(startViolationLoc, endViolationLoc, this, description);
         }
 
         return true;
