@@ -241,6 +241,22 @@ public:
 
     bool VisitSwitchStmt(SwitchStmt *node)
     {
+        SourceManager& sourceManager = _carrier->getSourceManager();
+        
+        
+            auto declaratorStartLoc = node->getLocStart();
+            auto declaratorEndLoc = node->getBody()->getLocStart();
+            auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLoc);
+    
+            auto declaratorString = getStringFromLocationTillLine(declaratorStartLoc, declaratorEndLineNumber);
+
+            if(checkFirstLineOfStmtForStringRef(declaratorString))
+            {
+                auto startViolationLoc = declaratorEndLoc;
+                auto endViolationLoc = declaratorEndLoc;
+                addViolation(startViolationLoc, endViolationLoc, this, description);
+            }
+        
         return true;
     }
 
