@@ -243,30 +243,123 @@ public:
     {
         SourceManager& sourceManager = _carrier->getSourceManager();
         
-        
-            auto declaratorStartLoc = node->getLocStart();
-            auto declaratorEndLoc = node->getBody()->getLocStart();
-            auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLoc);
-    
-            auto declaratorString = getStringFromLocationTillLine(declaratorStartLoc, declaratorEndLineNumber);
+        auto declaratorStartLoc = node->getLocStart();
+        auto declaratorEndLoc = node->getBody()->getLocStart();
+        auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLoc);
 
-            if(checkFirstLineOfStmtForStringRef(declaratorString))
-            {
-                auto startViolationLoc = declaratorEndLoc;
-                auto endViolationLoc = declaratorEndLoc;
-                addViolation(startViolationLoc, endViolationLoc, this, description);
-            }
+        auto declaratorString = getStringFromLocationTillLine(declaratorStartLoc, declaratorEndLineNumber);
+
+        if(checkFirstLineOfStmtForStringRef(declaratorString))
+        {
+            auto startViolationLoc = declaratorEndLoc;
+            auto endViolationLoc = declaratorEndLoc;
+            addViolation(startViolationLoc, endViolationLoc, this, description);
+        }
         
+        auto bodyEndLoc = node->getLocEnd();
+        auto bodyEndLineNumber = sourceManager.getPresumedLineNumber(bodyEndLoc);
+        auto stringEndBody = getLineAtLineNumber(bodyEndLineNumber);
+
+        if(checkLastLineOfStmtForStringRef(stringEndBody))
+        {
+            auto startViolationLoc = bodyEndLoc;
+            auto endViolationLoc = bodyEndLoc;
+            addViolation(startViolationLoc, endViolationLoc, this, description);
+        }
+
+        return true;
+    }
+
+    bool VisitSwitchCase(SwitchCase *node)
+    {
+        SourceManager& sourceManager = _carrier->getSourceManager();
+        
+        auto declaratorStartLoc = node->getLocStart();
+        auto declaratorEndLoc = node->getSubStmt()->getLocStart();
+        auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLoc);
+
+        auto declaratorString = getStringFromLocationTillLine(declaratorStartLoc, declaratorEndLineNumber);
+
+        if(checkFirstLineOfStmtForStringRef(declaratorString))
+        {
+            auto startViolationLoc = declaratorEndLoc;
+            auto endViolationLoc = declaratorEndLoc;
+            addViolation(startViolationLoc, endViolationLoc, this, description);
+        }
+        
+        auto bodyEndLoc = node->getLocEnd();
+        auto bodyEndLineNumber = sourceManager.getPresumedLineNumber(bodyEndLoc);
+        auto stringEndBody = getLineAtLineNumber(bodyEndLineNumber);
+
+        if(checkLastLineOfStmtForStringRef(stringEndBody))
+        {
+            auto startViolationLoc = bodyEndLoc;
+            auto endViolationLoc = bodyEndLoc;
+            addViolation(startViolationLoc, endViolationLoc, this, description);
+        }
+
         return true;
     }
 
     bool VisitWhileStmt(WhileStmt *node)
     {
+        SourceManager& sourceManager = _carrier->getSourceManager();
+        
+        auto declaratorStartLoc = node->getLocStart();
+        auto declaratorEndLoc = node->getBody()->getLocStart();
+        auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLoc);
+
+        auto declaratorString = getStringFromLocationTillLine(declaratorStartLoc, declaratorEndLineNumber);
+
+        if(checkFirstLineOfStmtForStringRef(declaratorString))
+        {
+            auto startViolationLoc = declaratorEndLoc;
+            auto endViolationLoc = declaratorEndLoc;
+            addViolation(startViolationLoc, endViolationLoc, this, description);
+        }
+
+        auto bodyEndLoc = node->getLocEnd();
+        auto bodyEndLineNumber = sourceManager.getPresumedLineNumber(bodyEndLoc);
+        auto stringEndBody = getLineAtLineNumber(bodyEndLineNumber);
+
+        if(checkLastLineOfStmtForStringRef(stringEndBody))
+        {
+            auto startViolationLoc = bodyEndLoc;
+            auto endViolationLoc = bodyEndLoc;
+            addViolation(startViolationLoc, endViolationLoc, this, description);
+        }
+
         return true;
     }
 
     bool VisitDoStmt(DoStmt *node)
     {
+        SourceManager& sourceManager = _carrier->getSourceManager();
+        
+        auto declaratorStartLoc = node->getLocStart();
+        auto declaratorEndLoc = node->getBody()->getLocStart();
+        auto declaratorEndLineNumber = sourceManager.getPresumedLineNumber(declaratorEndLoc);
+
+        auto declaratorString = getStringFromLocationTillLine(declaratorStartLoc, declaratorEndLineNumber);
+
+        if(checkFirstLineOfStmtForStringRef(declaratorString))
+        {
+            auto startViolationLoc = declaratorEndLoc;
+            auto endViolationLoc = declaratorEndLoc;
+            addViolation(startViolationLoc, endViolationLoc, this, description);
+        }
+
+        auto bodyEndLoc = node->getBody()->getLocEnd();
+        auto bodyEndLineNumber = sourceManager.getPresumedLineNumber(bodyEndLoc);
+        auto stringEndBody = getLineAtLineNumber(bodyEndLineNumber);
+
+        if(checkLastLineOfStmtForStringRef(stringEndBody))
+        {
+            auto startViolationLoc = bodyEndLoc;
+            auto endViolationLoc = bodyEndLoc;
+            addViolation(startViolationLoc, endViolationLoc, this, description);
+        }
+
         return true;
     }
 
@@ -274,7 +367,7 @@ public:
     bool VisitForStmt(ForStmt *node)
     {
         SourceManager& sourceManager = _carrier->getSourceManager();
-
+        
         auto forBody = node->getBody();
         
         if (forBody)
@@ -289,6 +382,17 @@ public:
             {
                 auto startViolationLoc = declaratorEndLoc;
                 auto endViolationLoc = declaratorEndLoc;
+                addViolation(startViolationLoc, endViolationLoc, this, description);
+            }
+
+            auto bodyEndLoc = node->getLocEnd();
+            auto bodyEndLineNumber = sourceManager.getPresumedLineNumber(bodyEndLoc);
+            auto stringEndBody = getLineAtLineNumber(bodyEndLineNumber);
+    
+            if(checkLastLineOfStmtForStringRef(stringEndBody))
+            {
+                auto startViolationLoc = bodyEndLoc;
+                auto endViolationLoc = bodyEndLoc;
                 addViolation(startViolationLoc, endViolationLoc, this, description);
             }
         }

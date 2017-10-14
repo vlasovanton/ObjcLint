@@ -17,7 +17,10 @@ R"(@interface NSObject
     switch (oldVersion) 
     {
         case 0:
-        case 1: 
+        {
+            i = 1;
+        }
+        case 1:
         {
             i = 0;
         }
@@ -30,7 +33,7 @@ R"(@interface NSObject
             i = 2;
         }
     }
-    return 0;   
+    return 0;
 }
 @end
 )";
@@ -90,6 +93,54 @@ R"(@interface NSObject
     {
         int a = 0;
     }
+    return 0;
+}
+
+@end
+
+)";
+
+static string correctCurveBracesAtWhileStatement =
+R"(@interface NSObject
+@end
+
+@interface BaseObject : NSObject
+@end
+
+@implementation BaseObject
+
+- (int)hash
+{
+    int i = 0;
+    while (i < 10)
+    {
+        i++;
+    }
+    return 0;
+}
+
+@end
+
+)";
+
+static string correctCurveBracesAtDoStatement =
+R"(@interface NSObject
+@end
+
+@interface BaseObject : NSObject
+@end
+
+@implementation BaseObject
+
+- (int)hash
+{
+    int i = 0;
+    do
+    {
+        i++;
+    }
+    while (i<10);
+
     return 0;
 }
 
@@ -324,6 +375,27 @@ R"(@interface NSObject
 
 )";
 
+static string endCurveBracesAtForStatementWithEmptyLineWithCode =
+R"(@interface NSObject
+@end
+
+@interface BaseObject : NSObject
+@end
+
+@implementation BaseObject
+
+- (int)hash
+{
+    for (int i = 0; i < 10; i++)
+    {
+        int a = 0; }
+    return 0;
+}
+
+@end
+
+)";
+
 static string startCurveBracesAtMethodDeclarationWithEmptyLineWithCode =
 R"(@interface NSObject
 @end
@@ -391,7 +463,7 @@ R"(@interface NSObject
 
         }
     }
-    return 0;   
+    return 0;
 }
 @end
 )";
@@ -411,6 +483,9 @@ R"(@interface NSObject
     int i;
     switch (oldVersion){
         case 0:
+        {
+            i = 1;
+        }
         case 1: 
         {
             i = 0;
@@ -424,9 +499,207 @@ R"(@interface NSObject
             i = 2;
         }
     }
-    return 0;   
+    return 0;
 }
 @end
+)";
+
+static string endCurveBracesAtSwitchStatementWithSameLineWithCode =
+R"(@interface NSObject
+@end
+
+@interface BaseObject : NSObject
+@end
+
+@implementation BaseObject
+
+- (int)hash
+{
+    int oldVersion = 3;
+    int i;
+    switch (oldVersion)
+    {
+        case 0:
+        {
+            i = 1;
+        }
+        case 1:
+        {
+            i = 0;
+        }
+        case 2:
+        {
+            i = 3;
+        }
+        default:
+            i = 2;}
+    return 0;
+}
+@end
+)";
+
+static string startCurveBracesAtSwitchStatementBodyWithSameLineWithCode =
+R"(@interface NSObject
+@end
+
+@interface BaseObject : NSObject
+@end
+
+@implementation BaseObject
+
+- (int)hash
+{
+    int oldVersion = 3;
+    int i;
+    switch (oldVersion)
+    {
+        case 0:
+        {
+            i = 1;
+        }
+        case 1: {
+            i = 0;
+        }
+        case 2:
+        {
+            i = 3;
+        }
+        default:
+        {
+            i = 2;
+        }
+    }
+    return 0;
+}
+@end
+)";
+
+static string endCurveBracesAtSwitchStatementBodyWithSameLineWithCode =
+R"(@interface NSObject
+@end
+
+@interface BaseObject : NSObject
+@end
+
+@implementation BaseObject
+
+- (int)hash
+{
+    int oldVersion = 3;
+    int i;
+    switch (oldVersion)
+    {
+        case 0:
+        {
+            i = 1;
+        }
+        case 1:
+        {
+            i = 0; }
+        case 2:
+        {
+            i = 3;
+        }
+        default:
+        {
+            i = 2;
+        }
+    }
+    return 0;
+}
+@end
+)";
+
+static string startCurveBracesAtWhileStatementBodyWithSameLineWithCode =
+R"(@interface NSObject
+@end
+
+@interface BaseObject : NSObject
+@end
+
+@implementation BaseObject
+
+- (int)hash
+{
+    int i = 0;
+    while (i < 10) {
+        i++;
+    }
+    return 0;
+}
+
+@end
+
+)";
+
+static string endCurveBracesAtWhileStatementBodyWithSameLineWithCode =
+R"(@interface NSObject
+@end
+
+@interface BaseObject : NSObject
+@end
+
+@implementation BaseObject
+
+- (int)hash
+{
+    int i = 0;
+    while (i < 10)
+    {
+        i++; }
+    return 0;
+}
+
+@end
+
+)";
+
+static string startCurveBracesAtDoStatementBodyWithSameLineWithCode =
+R"(@interface NSObject
+@end
+
+@interface BaseObject : NSObject
+@end
+
+@implementation BaseObject
+
+- (int)hash
+{
+    int i = 0;
+    do {
+        i++;
+    }
+    while (i<10);
+
+    return 0;
+}
+
+@end
+
+)";
+
+static string endCurveBracesAtDoStatementBodyWithSameLineWithCode =
+R"(@interface NSObject
+@end
+
+@interface BaseObject : NSObject
+@end
+
+@implementation BaseObject
+
+- (int)hash
+{
+    int i = 0;
+    do
+    {
+        i++; }
+    while (i<10);
+
+    return 0;
+}
+
+@end
+
 )";
 
 TEST(CheckCurveBraceRuleTest, PropertyTest)
@@ -450,6 +723,16 @@ TEST(CheckCurveBraceRuleTest, TestCorrectCurveBracesAtForStatement)
 TEST(CheckCurveBraceRuleTest, TestInCorrectFewCurveBraces)
 {
     testRuleOnObjCCode(new CheckCurveBraceRule(), correctFewCurveBraces);
+}
+
+TEST(CheckCurveBraceRuleTest, TestInCorrectCurveBracesAtWhileStatement)
+{
+    testRuleOnObjCCode(new CheckCurveBraceRule(), correctCurveBracesAtWhileStatement);
+}
+
+TEST(CheckCurveBraceRuleTest, TestInCorrectCurveBracesAtDoStatement)
+{
+    testRuleOnObjCCode(new CheckCurveBraceRule(), correctCurveBracesAtDoStatement);
 }
 
 TEST(CheckCurveBraceRuleTest, TestWhenCurveBracesAtMethodDeclarationWithSameLineWithCodee)
@@ -518,6 +801,12 @@ TEST(CheckCurveBraceRuleTest, TestStartCurveBracesAtForStatementWithEmptyLineWit
     0, 13, 5, 13, 5, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
 }
 
+TEST(CheckCurveBraceRuleTest, TestEndCurveBracesAtForStatementWithEmptyLineWithCode)
+{
+    testRuleOnObjCCode(new CheckCurveBraceRule(), endCurveBracesAtForStatementWithEmptyLineWithCode,
+    0, 13, 20, 13, 20, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+}
+
 TEST(CheckCurveBraceRuleTest, TestStartCurveBracesAtIfStatmentWithEmptyLineWithCode)
 {
     testRuleOnObjCCode(new CheckCurveBraceRule(), startCurveBracesAtIfStatmentWithEmptyLineWithCode,
@@ -539,4 +828,46 @@ TEST(CheckCurveBraceRuleTest, TestStartCurveBracesAtSwitchStatementWithSameLineW
 {
     testRuleOnObjCCode(new CheckCurveBraceRule(), startCurveBracesAtSwitchStatementWithSameLineWithCode,
     0, 13, 24, 13, 24, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+}
+
+TEST(CheckCurveBraceRuleTest, TestEndCurveBracesAtSwitchStatementWithSameLineWithCode)
+{
+    testRuleOnObjCCode(new CheckCurveBraceRule(), endCurveBracesAtSwitchStatementWithSameLineWithCode,
+    0, 28, 19, 28, 19, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+}
+
+TEST(CheckCurveBraceRuleTest, TestStartCurveBracesAtSwitchStatementBodyWithSameLineWithCode)
+{
+    testRuleOnObjCCode(new CheckCurveBraceRule(), startCurveBracesAtSwitchStatementBodyWithSameLineWithCode,
+    0, 19, 17, 19, 17, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+}
+
+TEST(CheckCurveBraceRuleTest, TestEndCurveBracesAtSwitchStatementBodyWithSameLineWithCode)
+{
+    testRuleOnObjCCode(new CheckCurveBraceRule(), endCurveBracesAtSwitchStatementBodyWithSameLineWithCode,
+    0, 21, 20, 21, 20, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+}
+
+TEST(CheckCurveBraceRuleTest, TestStartCurveBracesAtWhileStatementBodyWithSameLineWithCode)
+{
+    testRuleOnObjCCode(new CheckCurveBraceRule(), startCurveBracesAtWhileStatementBodyWithSameLineWithCode,
+    0, 12, 20, 12, 20, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+}
+
+TEST(CheckCurveBraceRuleTest, TestEndCurveBracesAtWhileStatementBodyWithSameLineWithCode)
+{
+    testRuleOnObjCCode(new CheckCurveBraceRule(), endCurveBracesAtWhileStatementBodyWithSameLineWithCode,
+    0, 14, 14, 14, 14, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+}
+
+TEST(CheckCurveBraceRuleTest, TestStartCurveBracesAtDoStatementBodyWithSameLineWithCode)
+{
+    testRuleOnObjCCode(new CheckCurveBraceRule(), startCurveBracesAtDoStatementBodyWithSameLineWithCode,
+    0, 12, 8, 12, 8, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
+}
+
+TEST(CheckCurveBraceRuleTest, TestEndCurveBracesAtDoStatementBodyWithSameLineWithCode)
+{
+    testRuleOnObjCCode(new CheckCurveBraceRule(), endCurveBracesAtDoStatementBodyWithSameLineWithCode,
+    0, 14, 14, 14, 14, "Фигурные скобки (в if/else/switch/while и т.д за исключением блоков) всегда должны открываться и закрываться на новой строке");
 }
